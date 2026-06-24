@@ -1,0 +1,10 @@
+# -------------------------------------------------------------------
+# 管理対象のリポジトリ一覧
+# -------------------------------------------------------------------
+
+- name: "poohma-start"
+  description: "Account manager for family"
+
+- name: "gasnuki"
+  description: "A TypeScript library to get type-def of GoogleAppsScript server functions"
+  

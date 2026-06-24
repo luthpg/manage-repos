@@ -1,0 +1,13 @@
+services:
+  terraform:
+    build: .
+    volumes:
+      - .:/workspace
+    secrets:
+      - github_token
+    entrypoint: ["terraform"]
+
+secrets:
+  github_token:
+    # PC上の安全なパスにあるトークンファイルを指定（例: ~/.secrets/github_token.txt）
+    file: ~/.secrets/github_token.txt

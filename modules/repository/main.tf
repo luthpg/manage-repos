@@ -21,7 +21,7 @@ resource "github_branch_protection" "main" {
   repository_id = github_repository.repo.node_id
   pattern       = "main"
 
-  # 【重要】管理者の誤操作防止は最低限（自分は直接Pushやテスト未完了マージが可能）
+  # 管理者の誤操作防止は最低限（自分は直接Pushやテスト未完了マージが可能）
   enforce_admins = false
 
   # 外部からの「なりすましコミット」をマージ不可にする（署名必須）
@@ -30,7 +30,7 @@ resource "github_branch_protection" "main" {
   # 外部ユーザー（コントリビューター）からのPRには、必ずCIの通過を義務付ける
   required_status_checks {
     strict   = true
-    contexts = ["build-and-test"] # あなたのGitHub Actionsのジョブ名に合わせてください
+    contexts = var.required_status_checks_contexts
   }
 
   # 自分自身の開発スピードを落とさないため、マージに必要な「承認数」は0にする
@@ -54,9 +54,9 @@ resource "github_actions_repository_permissions" "actions_limit" {
   }
 }
 
-# 4. 新規・捨てアカウントによるIssue/PRスパムや嫌がらせを24時間自動ブロック
+# 4. 新規・捨てアカウントによるIssue/PRスパムや嫌がらせを自動ブロック
 resource "github_repository_interaction_restriction" "protect_spam" {
   repository = github_repository.repo.name
   limit      = "contributors_only" # 実績のあるコントリビューターまたは既存ユーザーのみ
-  expiry     = "forever"
+  expiry     = "six_months"        # GitHub API仕様上の上限（foreverから修正）
 }

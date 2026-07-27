@@ -13,10 +13,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # 全リポジトリの操作権限を持つPAT
       GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-      # GitHub Variables から JSON 文字列を Terraform に渡す
       TF_VAR_repositories: ${{ vars.REPOSITORIES_JSON }}
+      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
 
     steps:
       - name: Checkout Code

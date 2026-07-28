@@ -4,6 +4,10 @@ resource "github_repository" "repo" {
   description = var.description
   visibility  = "public" # 公開リポジトリ
 
+  # --- プロジェクト機能の有効化 ---
+  has_issues   = true # Issue機能を有効化
+  has_wiki     = true # Wiki機能を有効化
+  
   # 外部PRのコード隠蔽を防ぐ（履歴をSquashに1つに潰して、後からの検知・Revertを容易にする）
   allow_merge_commit = false
   allow_squash_merge = true

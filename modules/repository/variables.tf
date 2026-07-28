@@ -14,3 +14,10 @@ variable "required_status_checks_contexts" {
   description = "PRマージ前に必須とするCIのステータスチェック名"
   default     = ["build-and-test"]
 }
+
+# Actionsの制限レベル ("all", "local_only", "selected")
+variable "allowed_actions" {
+  type        = string
+  description = "GitHub Actionsの実行制限レベル"
+  default     = "selected"
+}

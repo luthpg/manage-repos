@@ -48,4 +48,6 @@ module "github_repositories" {
 
   repo_name   = each.value.name
   description = lookup(each.value, "description", "")
+  # JSON側で指定があればそれを使い、無ければデフォルト["build-and-test"]を使う
+  required_status_checks_contexts = lookup(each.value, "required_status_checks_contexts", ["build-and-test"])
 }

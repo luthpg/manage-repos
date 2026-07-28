@@ -20,4 +20,9 @@ variable "allowed_actions" {
   type        = string
   description = "GitHub Actionsの実行制限レベル"
   default     = "selected"
+
+  validation {
+    condition     = contains(["all", "local_only", "selected"], var.allowed_actions)
+    error_message = "allowed_actions must be one of: 'all', 'local_only', 'selected'."
+  }
 }

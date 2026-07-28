@@ -5,9 +5,9 @@ resource "github_repository" "repo" {
   visibility  = "public" # 公開リポジトリ
 
   # --- プロジェクト機能の有効化 ---
-  has_issues   = true # Issue機能を有効化
-  has_wiki     = true # Wiki機能を有効化
-  
+  has_issues = true # Issue機能を有効化
+  has_wiki   = true # Wiki機能を有効化
+
   # 外部PRのコード隠蔽を防ぐ（履歴をSquashに1つに潰して、後からの検知・Revertを容易にする）
   allow_merge_commit = false
   allow_squash_merge = true
@@ -38,7 +38,7 @@ resource "github_branch_protection" "main" {
   required_pull_request_reviews {
     required_approving_review_count = 0
     # ただし外部がPR作成後にコードをこっそり書き換えた（追記した）場合、レビュー状態を強制リセット
-    dismiss_stale_reviews           = true
+    dismiss_stale_reviews = true
   }
 }
 

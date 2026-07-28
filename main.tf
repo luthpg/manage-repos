@@ -1,5 +1,6 @@
 terraform {
-  required_version = ">= 1.5.0"
+  # import ブロックでの for_each サポートのため v1.7.0 以上を指定
+  required_version = ">= 1.7.0"
 
   required_providers {
     github = {
@@ -30,12 +31,20 @@ variable "repositories" {
 # 2. 受け取った JSON 文字列をパースして locals 化
 locals {
   repositories_list = jsondecode(var.repositories)
+  repositories_map  = { for repo in local.repositories_list : repo.name => repo }
 }
 
-# 3. ループ処理でモジュール呼び出し
+# 3. 既存のリポジトリを自動でStateに取り込むインポート設定 (Terraform 1.7+)
+import {
+  for_each = local.repositories_map
+  to       = module.github_repositories[each.key].github_repository.repo
+  id       = each.key
+}
+
+# 4. ループ処理でモジュール呼び出し
 module "github_repositories" {
   source   = "./modules/repository"
-  for_each = { for repo in local.repositories_list : repo.name => repo }
+  for_each = local.repositories_map
 
   repo_name   = each.value.name
   description = lookup(each.value, "description", "")

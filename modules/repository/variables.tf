@@ -7,12 +7,14 @@ variable "description" {
   type        = string
   description = "リポジトリの説明文"
   default     = ""
+  nullable    = false
 }
 
 variable "required_status_checks_contexts" {
   type        = list(string)
   description = "PRマージ前に必須とするCIのステータスチェック名"
   default     = ["build-and-test"]
+  nullable    = false
 }
 
 # Actionsの制限レベル ("all", "local_only", "selected")
@@ -20,6 +22,7 @@ variable "allowed_actions" {
   type        = string
   description = "GitHub Actionsの実行制限レベル"
   default     = "all" # pnpmセットアップアクションのため、デフォルトallに設定
+  nullable    = false
 
   validation {
     condition     = contains(["all", "local_only", "selected"], var.allowed_actions)

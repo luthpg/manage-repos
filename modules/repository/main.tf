@@ -48,10 +48,15 @@ resource "github_actions_repository_permissions" "actions_limit" {
   enabled    = true
 
   # 許可された安全なアクション（公式や検証済み組織）だけを実行可能にする
-  allowed_actions = "selected"
-  allowed_actions_config {
-    github_owned_allowed = true # GitHub公式のアクションのみ許可
-    verified_allowed     = true # Marketplaceの認証済み組織（Actions公式など）のみ許可
+  allowed_actions = var.allowed_actions
+
+  # allowed_actions が "selected" の場合のみ設定を適用
+  dynamic "allowed_actions_config" {
+    for_each = var.allowed_actions == "selected" ? [1] : []
+    content {
+      github_owned_allowed = true # GitHub公式のアクションのみ許可
+      verified_allowed     = true # Marketplaceの認証済み組織のみ許可
+    }
   }
 }
 

@@ -19,7 +19,7 @@ variable "required_status_checks_contexts" {
 variable "allowed_actions" {
   type        = string
   description = "GitHub Actionsの実行制限レベル"
-  default     = "selected"
+  default     = "all" # pnpmセットアップアクションのため、デフォルトallに設定
 
   validation {
     condition     = contains(["all", "local_only", "selected"], var.allowed_actions)

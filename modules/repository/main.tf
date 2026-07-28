@@ -51,13 +51,7 @@ resource "github_actions_repository_permissions" "actions_limit" {
   }
 }
 
-# 4. 新規・捨てアカウントによるIssue/PRスパムや嫌がらせを自動ブロック
-resource "github_user_interaction_restriction" "protect_spam" {
-  limit  = "contributors_only" # 指定可能値: "existing_users", "contributors_only", "collaborators_only"
-  expiry = "six_months"      # 指定可能値: "one_day", "one_week", "one_month", "three_months", "six_months"
-}
-
-# 5. 脆弱性アラートを有効化
+# 4. 脆弱性アラートを有効化
 resource "github_repository_vulnerability_alerts" "repo" {
   repository = github_repository.repo.name
   enabled    = true

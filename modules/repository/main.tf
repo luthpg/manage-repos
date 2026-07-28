@@ -4,9 +4,6 @@ resource "github_repository" "repo" {
   description = var.description
   visibility  = "public" # 公開リポジトリ
 
-  # 脆弱性アラートとコード解析の強制（Dependabot / Code Scanning）
-  vulnerability_alerts = true
-
   # 外部PRのコード隠蔽を防ぐ（履歴をSquashに1つに潰して、後からの検知・Revertを容易にする）
   allow_merge_commit = false
   allow_squash_merge = true
@@ -55,8 +52,13 @@ resource "github_actions_repository_permissions" "actions_limit" {
 }
 
 # 4. 新規・捨てアカウントによるIssue/PRスパムや嫌がらせを自動ブロック
-resource "github_repository_interaction_restriction" "protect_spam" {
+resource "github_user_interaction_restriction" "protect_spam" {
+  limit  = "contributors_only" # 指定可能値: "existing_users", "contributors_only", "collaborators_only"
+  expiry = "six_months"      # 指定可能値: "one_day", "one_week", "one_month", "three_months", "six_months"
+}
+
+# 5. 脆弱性アラートを有効化
+resource "github_repository_vulnerability_alerts" "repo" {
   repository = github_repository.repo.name
-  limit      = "contributors_only" # 実績のあるコントリビューターまたは既存ユーザーのみ
-  expiry     = "six_months"        # GitHub API仕様上の上限（foreverから修正）
+  enabled    = true
 }

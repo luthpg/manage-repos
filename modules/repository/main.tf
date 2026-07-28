@@ -5,9 +5,9 @@ resource "github_repository" "repo" {
   visibility  = "public" # 公開リポジトリ
 
   # --- プロジェクト機能の有効化 ---
-  has_issues   = true # Issue機能を有効化
-  has_wiki     = true # Wiki機能を有効化
-  
+  has_issues = true # Issue機能を有効化
+  has_wiki   = true # Wiki機能を有効化
+
   # 外部PRのコード隠蔽を防ぐ（履歴をSquashに1つに潰して、後からの検知・Revertを容易にする）
   allow_merge_commit = false
   allow_squash_merge = true
@@ -28,17 +28,21 @@ resource "github_branch_protection" "main" {
   # 外部からの「なりすましコミット」をマージ不可にする（署名必須）
   require_signed_commits = true
 
-  # 外部ユーザー（コントリビューター）からのPRには、必ずCIの通過を義務付ける
-  required_status_checks {
-    strict   = true
-    contexts = var.required_status_checks_contexts
+  # 外部ユーザー（コントリビューター）からのPRには、CIの通過を義務付ける
+  # リスト要素数が0より大きい場合のみ、CIチェック必須ルールを適用する
+  dynamic "required_status_checks" {
+    for_each = length(var.required_status_checks_contexts) > 0 ? [1] : []
+    content {
+      strict   = true
+      contexts = var.required_status_checks_contexts
+    }
   }
 
   # 自分自身の開発スピードを落とさないため、マージに必要な「承認数」は0にする
   required_pull_request_reviews {
     required_approving_review_count = 0
     # ただし外部がPR作成後にコードをこっそり書き換えた（追記した）場合、レビュー状態を強制リセット
-    dismiss_stale_reviews           = true
+    dismiss_stale_reviews = true
   }
 }
 
@@ -48,10 +52,15 @@ resource "github_actions_repository_permissions" "actions_limit" {
   enabled    = true
 
   # 許可された安全なアクション（公式や検証済み組織）だけを実行可能にする
-  allowed_actions = "selected"
-  allowed_actions_config {
-    github_owned_allowed = true # GitHub公式のアクションのみ許可
-    verified_allowed     = true # Marketplaceの認証済み組織（Actions公式など）のみ許可
+  allowed_actions = var.allowed_actions
+
+  # allowed_actions が "selected" の場合のみ設定を適用
+  dynamic "allowed_actions_config" {
+    for_each = var.allowed_actions == "selected" ? [1] : []
+    content {
+      github_owned_allowed = true # GitHub公式のアクションのみ許可
+      verified_allowed     = true # Marketplaceの認証済み組織のみ許可
+    }
   }
 }
 

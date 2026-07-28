@@ -28,10 +28,14 @@ resource "github_branch_protection" "main" {
   # 外部からの「なりすましコミット」をマージ不可にする（署名必須）
   require_signed_commits = true
 
-  # 外部ユーザー（コントリビューター）からのPRには、必ずCIの通過を義務付ける
-  required_status_checks {
-    strict   = true
-    contexts = var.required_status_checks_contexts
+  # 外部ユーザー（コントリビューター）からのPRには、CIの通過を義務付ける
+  # リスト要素数が0より大きい場合のみ、CIチェック必須ルールを適用する
+  dynamic "required_status_checks" {
+    for_each = length(var.required_status_checks_contexts) > 0 ? [1] : []
+    content {
+      strict   = true
+      contexts = var.required_status_checks_contexts
+    }
   }
 
   # 自分自身の開発スピードを落とさないため、マージに必要な「承認数」は0にする

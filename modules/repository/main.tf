@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    github = {
+      source = "integrations/github"
+      version = "~> 6.2"
+    }
+  }
+}
+
 # 1. リポジトリ本体の設定（外部防御を最大化）
 resource "github_repository" "repo" {
   name        = var.repo_name
@@ -17,19 +26,15 @@ resource "github_repository" "repo" {
   delete_branch_on_merge = true
 }
 
-# 2. メインブランチの保護（自分への制限は緩く、外部からの攻撃は鉄壁に）
+# 2. メインブランチの保護
 resource "github_branch_protection" "main" {
   repository_id = github_repository.repo.node_id
   pattern       = "main"
 
-  # 管理者の誤操作防止は最低限（自分は直接Pushやテスト未完了マージが可能）
-  enforce_admins = false
-
-  # 外部からの「なりすましコミット」をマージ不可にする（署名必須）
+  enforce_admins         = false
   require_signed_commits = true
 
   # 外部ユーザー（コントリビューター）からのPRには、CIの通過を義務付ける
-  # リスト要素数が0より大きい場合のみ、CIチェック必須ルールを適用する
   dynamic "required_status_checks" {
     for_each = length(var.required_status_checks_contexts) > 0 ? [1] : []
     content {
@@ -38,34 +43,36 @@ resource "github_branch_protection" "main" {
     }
   }
 
-  # 自分自身の開発スピードを落とさないため、マージに必要な「承認数」は0にする
   required_pull_request_reviews {
     required_approving_review_count = 0
-    # ただし外部がPR作成後にコードをこっそり書き換えた（追記した）場合、レビュー状態を強制リセット
-    dismiss_stale_reviews = true
+    dismiss_stale_reviews           = true
   }
 }
 
-# 3. GitHub Actionsの実行権限を厳格化（不正ランナー利用・トークン奪取対策）
+# 3. GitHub Actionsの実行権限
 resource "github_actions_repository_permissions" "actions_limit" {
   repository = github_repository.repo.name
   enabled    = true
 
-  # 許可された安全なアクション（公式や検証済み組織）だけを実行可能にする
   allowed_actions = var.allowed_actions
 
-  # allowed_actions が "selected" の場合のみ設定を適用
   dynamic "allowed_actions_config" {
     for_each = var.allowed_actions == "selected" ? [1] : []
     content {
-      github_owned_allowed = true # GitHub公式のアクションのみ許可
-      verified_allowed     = true # Marketplaceの認証済み組織のみ許可
+      github_owned_allowed = true
+      verified_allowed     = true
     }
   }
 }
 
-# 4. 脆弱性アラートを有効化
+# 4. Dependabot 脆弱性アラートの有効化
 resource "github_repository_vulnerability_alerts" "repo" {
+  repository = github_repository.repo.name
+  enabled    = true
+}
+
+# 5. Dependabot セキュリティアップデートの有効化（脆弱性発見時に自動で修正PRを作成）
+resource "github_repository_dependabot_security_updates" "repo" {
   repository = github_repository.repo.name
   enabled    = true
 }

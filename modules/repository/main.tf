@@ -76,10 +76,3 @@ resource "github_repository_dependabot_security_updates" "repo" {
   repository = github_repository.repo.name
   enabled    = true
 }
-
-# 6. CodeQL (Code Scanning Default Setup) の一律有効化
-resource "github_repository_code_scanning_default_setup" "repo" {
-  repository  = github_repository.repo.name
-  state       = "configured"
-  query_suite = "default"
-}

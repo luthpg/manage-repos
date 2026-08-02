@@ -32,7 +32,7 @@ resource "github_branch_protection" "main" {
   pattern       = "main"
 
   enforce_admins         = false
-  require_signed_commits = true
+  require_signed_commits = false
 
   # 外部ユーザー（コントリビューター）からのPRには、CIの通過を義務付ける
   dynamic "required_status_checks" {

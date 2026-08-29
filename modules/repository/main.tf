@@ -17,6 +17,10 @@ resource "github_repository" "repo" {
   has_issues = true # Issue機能を有効化
   has_wiki   = true # Wiki機能を有効化
 
+  # use_github_pages が true の場合は Pages URL を動的生成し、
+  # それ以外は指定された homepage_url を使用する
+  homepage_url = var.use_github_pages ? "https://${var.owner}.github.io/${var.repo_name}/" : var.homepage_url
+
   # 外部PRのコード隠蔽を防ぐ（履歴をSquashに1つに潰して、後からの検知・Revertを容易にする）
   allow_merge_commit = false
   allow_squash_merge = true

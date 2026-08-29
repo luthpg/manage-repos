@@ -17,6 +17,10 @@ resource "github_repository" "repo" {
   has_issues = true # Issue機能を有効化
   has_wiki   = true # Wiki機能を有効化
 
+  # use_github_pages が true の場合は Pages URL を動的生成し、
+  # それ以外は指定された homepage_url を使用する
+  homepage_url = var.use_github_pages ? "https://${var.owner}.github.io/${var.repo_name}/" : var.homepage_url
+
   # 外部PRのコード隠蔽を防ぐ（履歴をSquashに1つに潰して、後からの検知・Revertを容易にする）
   allow_merge_commit = false
   allow_squash_merge = true
@@ -71,8 +75,13 @@ resource "github_repository_vulnerability_alerts" "repo" {
   enabled    = true
 }
 
-# 5. Dependabot セキュリティアップデートの有効化（脆弱性発見時に自動で修正PRを作成）
+# 5. Dependabot セキュリティアップデートの有効化
 resource "github_repository_dependabot_security_updates" "repo" {
   repository = github_repository.repo.name
   enabled    = true
+
+  # vulnerability_alerts が完了してから実行するように依存関係を設定
+  depends_on = [
+    github_repository_vulnerability_alerts.repo
+  ]
 }

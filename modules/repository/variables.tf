@@ -29,3 +29,22 @@ variable "allowed_actions" {
     error_message = "allowed_actions must be one of: 'all', 'local_only', 'selected'."
   }
 }
+
+variable "homepage_url" {
+  type        = string
+  description = "リポジトリのWebサイトURL（手動指定）"
+  default     = null
+}
+
+variable "use_github_pages" {
+  type        = bool
+  description = "GitHub PagesのデフォルトURLを自動割り当てするかどうか"
+  default     = false
+  nullable    = false
+}
+
+variable "owner" {
+  type        = string
+  description = "GitHubの組織名またはユーザー名"
+  default     = "ciderlabs"
+}

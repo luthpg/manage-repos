@@ -7,6 +7,23 @@ terraform {
   }
 }
 
+removed {
+  from = module.github_repositories["node-inhand"]
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = module.github_repositories["poohma-workers"]
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+
 # 1. リポジトリ本体の設定（外部防御を最大化）
 resource "github_repository" "repo" {
   name        = var.repo_name

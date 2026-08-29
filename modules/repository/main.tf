@@ -75,8 +75,13 @@ resource "github_repository_vulnerability_alerts" "repo" {
   enabled    = true
 }
 
-# 5. Dependabot セキュリティアップデートの有効化（脆弱性発見時に自動で修正PRを作成）
+# 5. Dependabot セキュリティアップデートの有効化
 resource "github_repository_dependabot_security_updates" "repo" {
   repository = github_repository.repo.name
   enabled    = true
+
+  # vulnerability_alerts が完了してから実行するように依存関係を設定
+  depends_on = [
+    github_repository_vulnerability_alerts.repo
+  ]
 }

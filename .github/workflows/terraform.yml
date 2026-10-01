@@ -81,7 +81,7 @@ jobs:
               if allowed in ['all', 'local_only', 'selected']:
                   item['allowed_actions'] = allowed
 
-              raw_checks = content.get('required_status_checks_contexts')
+              raw_checks = content.get('required_checks')
               if raw_checks:
                   checks = []
                   if isinstance(raw_checks, list):
@@ -95,6 +95,7 @@ jobs:
                               if part.strip():
                                   checks.append(part.strip())
                   if checks:
+                      # Terraform 側の main.tf が期待するキー名にマッピング
                       item['required_status_checks_contexts'] = checks
 
               repos.append(item)

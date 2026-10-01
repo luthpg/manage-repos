@@ -1,5 +1,4 @@
 name: "Terraform GitHub Management"
-
 on:
   push:
     branches:
@@ -11,15 +10,108 @@ jobs:
   terraform:
     name: "Terraform CI/CD"
     runs-on: ubuntu-latest
-
     env:
       GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-      TF_VAR_repositories: ${{ vars.REPOSITORIES_JSON }}
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Fetch Repositories from microCMS
+        env:
+          MICROCMS_SERVICE_DOMAIN: ${{ secrets.MICROCMS_SERVICE_DOMAIN || vars.MICROCMS_SERVICE_DOMAIN }}
+          MICROCMS_API_KEY: ${{ secrets.MICROCMS_API_KEY }}
+          MICROCMS_ENDPOINT: ${{ vars.MICROCMS_ENDPOINT || 'managed-repos' }}
+        run: |
+          python3 -c "
+          import os, sys, json, urllib.request, urllib.error
+
+          def to_str(val):
+              if isinstance(val, list):
+                  return str(val[0]).strip() if val else ''
+              return str(val or '').strip()
+
+          domain = os.environ.get('MICROCMS_SERVICE_DOMAIN', '').strip()
+          api_key = os.environ.get('MICROCMS_API_KEY', '').strip()
+          endpoint = os.environ.get('MICROCMS_ENDPOINT', 'managed-repos').strip()
+
+          if not domain or not api_key:
+              sys.stderr.write('Error: MICROCMS_SERVICE_DOMAIN and MICROCMS_API_KEY must be set.\n')
+              sys.exit(1)
+
+          url = f'https://{domain}.microcms.io/api/v1/{endpoint}?limit=100'
+          req = urllib.request.Request(url, headers={
+              'X-MICROCMS-API-KEY': api_key,
+              'User-Agent': 'GitHub-Actions-Terraform'
+          })
+
+          try:
+              with urllib.request.urlopen(req) as res:
+                  data = json.loads(res.read().decode('utf-8'))
+          except urllib.error.HTTPError as e:
+              sys.stderr.write(f'HTTP Error: {e.code} - {e.reason}\n')
+              sys.exit(1)
+          except Exception as e:
+              sys.stderr.write(f'Failed to fetch data from microCMS: {e}\n')
+              sys.exit(1)
+
+          repos = []
+          for content in data.get('contents', []):
+              if content.get('enabled') is False:
+                  continue
+
+              name = to_str(content.get('name') or content.get('repo_name'))
+              if not name:
+                  continue
+
+              item = {'name': name}
+
+              desc = to_str(content.get('description'))
+              if desc:
+                  item['description'] = desc
+
+              homepage = to_str(content.get('homepage_url'))
+              if homepage:
+                  item['homepage_url'] = homepage
+
+              if 'use_github_pages' in content and content['use_github_pages'] is not None:
+                  item['use_github_pages'] = bool(content['use_github_pages'])
+
+              allowed = to_str(content.get('allowed_actions'))
+              if allowed in ['all', 'local_only', 'selected']:
+                  item['allowed_actions'] = allowed
+
+              raw_checks = content.get('required_status_checks_contexts')
+              if raw_checks:
+                  checks = []
+                  if isinstance(raw_checks, list):
+                      for c in raw_checks:
+                          for part in str(c).split(','):
+                              if part.strip():
+                                  checks.append(part.strip())
+                  elif isinstance(raw_checks, str):
+                      for line in raw_checks.splitlines():
+                          for part in line.split(','):
+                              if part.strip():
+                                  checks.append(part.strip())
+                  if checks:
+                      item['required_status_checks_contexts'] = checks
+
+              repos.append(item)
+
+          if not repos:
+              sys.stderr.write('Error: No valid repositories found from microCMS.\n')
+              sys.exit(1)
+
+          json_output = json.dumps(repos, ensure_ascii=False)
+
+          github_env = os.environ.get('GITHUB_ENV')
+          if github_env:
+              with open(github_env, 'a', encoding='utf-8') as f:
+                  f.write('TF_VAR_repositories<<EOF\n')
+                  f.write(json_output + '\n')
+                  f.write('EOF\n')
+          "
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

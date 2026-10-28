@@ -13,7 +13,7 @@ variable "description" {
 variable "required_status_checks_contexts" {
   type        = list(string)
   description = "PRマージ前に必須とするCIのステータスチェック名"
-  default     = ["build-and-test"]
+  default     = []
   nullable    = false
 }
 
